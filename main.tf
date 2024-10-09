@@ -100,13 +100,13 @@ resource "local_file" "inventory" {
   filename = "ansible/inventory/hosts.ini"
   content  = <<-EOT
 [servers]
-%{ for vm in proxmox_vm_qemu.master ~}
-${vm.name} ansible_host=${vm.ssh_host}
+%{ for key, vm in proxmox_vm_qemu.master ~}
+server${key+1} ansible_host=${vm.ssh_host}
 %{ endfor ~}
 
 [agents]
-%{ for vm in proxmox_vm_qemu.worker ~}
-${vm.name} ansible_host=${vm.ssh_host}
+%{ for key, vm in proxmox_vm_qemu.worker ~}
+agent${key+1} ansible_host=${vm.ssh_host}
 %{ endfor ~}
 
 [rke2]
