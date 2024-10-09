@@ -97,7 +97,7 @@ resource "proxmox_vm_qemu" "worker" {
 }
 
 resource "local_file" "inventory" {
-  filename = "ansible/inventory/host.ini"
+  filename = "ansible/inventory/hosts.ini"
   content  = <<-EOT
 [servers]
 %{ for vm in proxmox_vm_qemu.master ~}

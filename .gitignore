@@ -39,3 +39,6 @@ secrets.json
 
 # Other common directories/files to ignore
 .DS_Store
+
+# Ignore ansible inventory
+ansible/inventory/hosts.ini
