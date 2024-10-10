@@ -17,7 +17,7 @@ resource "proxmox_vm_qemu" "master" {
   hotplug  = var.hotplug
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
-
+  onboot   = var.onboot
 
   network {
     model    = var.network_model
@@ -66,7 +66,7 @@ resource "proxmox_vm_qemu" "worker" {
   hotplug  = var.hotplug
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
-
+  onboot   = var.onboot
 
   network {
     model    = var.network_model

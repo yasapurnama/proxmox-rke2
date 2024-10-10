@@ -138,6 +138,12 @@ variable "bootdisk" {
   default     = "virtio0"
 }
 
+variable "onboot" {
+  description = "Whether to start the VMs on boot"
+  type        = bool
+  default     = true
+}
+
 variable "network_model" {
   description = "The network model for the VMs"
   type        = string
