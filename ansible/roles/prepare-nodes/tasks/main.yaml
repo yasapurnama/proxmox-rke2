@@ -20,6 +20,10 @@
 #     state: absent
 #     purge: yes
 #     autoremove: yes
+#   retries: 5
+#   delay: 10
+#   register: apt_remove_result
+#   until: apt_remove_result is succeeded
 
 # - name: Hold snapd package to prevent reinstallation
 #   command: apt-mark hold snapd
