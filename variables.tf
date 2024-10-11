@@ -114,6 +114,12 @@ variable "cpu_socket" {
   default     = 1
 }
 
+variable "vcpus" {
+  description = "The number of vCPUs for the VMs"
+  type        = number
+  default     = 2
+}
+
 variable "memory" {
   description = "The amount of memory in MB for the VMs"
   type        = number

@@ -13,6 +13,7 @@ resource "proxmox_vm_qemu" "master" {
 
   cores    = var.cpu_cores
   sockets  = var.cpu_socket
+  vcpus    = var.vcpus
   memory   = var.memory
   hotplug  = var.hotplug
   scsihw   = var.scsihw
@@ -62,6 +63,7 @@ resource "proxmox_vm_qemu" "worker" {
 
   cores    = var.cpu_cores
   sockets  = var.cpu_socket
+  vcpus    = var.vcpus
   memory   = var.memory
   hotplug  = var.hotplug
   scsihw   = var.scsihw
