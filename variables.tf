@@ -150,6 +150,12 @@ variable "onboot" {
   default     = true
 }
 
+variable "vm_state" {
+  description = "The state of the VMs"
+  type        = string
+  default     = "running"
+}
+
 variable "network_model" {
   description = "The network model for the VMs"
   type        = string

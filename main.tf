@@ -19,6 +19,7 @@ resource "proxmox_vm_qemu" "master" {
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
   onboot   = var.onboot
+  vm_state = var.vm_state
 
   network {
     model    = var.network_model
@@ -69,6 +70,7 @@ resource "proxmox_vm_qemu" "worker" {
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
   onboot   = var.onboot
+  vm_state = var.vm_state
 
   network {
     model    = var.network_model
