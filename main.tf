@@ -1,5 +1,6 @@
 resource "proxmox_vm_qemu" "master" {
   count = var.vm_master_count
+  vmid  = var.vmid
   name  = "${var.name}-master-${count.index}"
 
   target_node = var.target_node
@@ -15,6 +16,7 @@ resource "proxmox_vm_qemu" "master" {
   sockets  = var.cpu_socket
   vcpus    = var.vcpus
   memory   = var.memory
+  balloon  = var.balloon
   hotplug  = var.hotplug
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
@@ -47,10 +49,19 @@ resource "proxmox_vm_qemu" "master" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [
+      vmid,
+      ciuser,
+      sshkeys
+    ]
+  }
+
 }
 
 resource "proxmox_vm_qemu" "worker" {
   count = var.vm_worker_count
+  vmid  = var.vmid
   name  = "${var.name}-worker-${count.index}"
 
   target_node = var.target_node
@@ -66,6 +77,7 @@ resource "proxmox_vm_qemu" "worker" {
   sockets  = var.cpu_socket
   vcpus    = var.vcpus
   memory   = var.memory
+  balloon  = var.balloon
   hotplug  = var.hotplug
   scsihw   = var.scsihw
   bootdisk = var.bootdisk
@@ -96,6 +108,14 @@ resource "proxmox_vm_qemu" "worker" {
         }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      vmid,
+      ciuser,
+      sshkeys
+    ]
   }
 
 }
