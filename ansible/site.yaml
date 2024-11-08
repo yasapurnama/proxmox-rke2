@@ -54,3 +54,10 @@
   gather_facts: true
   roles:
     - apply-manifests
+
+# Install rancher
+- name: Install rancher
+  hosts: servers
+  gather_facts: true
+  roles:
+    - ranche
