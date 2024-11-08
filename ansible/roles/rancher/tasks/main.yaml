@@ -59,7 +59,7 @@
 
 - name: Install cert manager
   ansible.builtin.command:
-    cmd: helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.1 --set installCRDs=true
+    cmd: helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.1
   become_user: "{{ ansible_user }}"
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
