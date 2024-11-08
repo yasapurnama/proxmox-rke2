@@ -1,0 +1,144 @@
+# Install helm chart
+- name: Download helm chart
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
+    dest: /tmp/get_helm.sh
+    mode: '0700'
+    force: true
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Install helm chart
+  ansible.builtin.command:
+    cmd: /tmp/get_helm.sh
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Check helm exist
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_exist
+
+# Add rancher helm repository
+- name: Add rancher repo
+  ansible.builtin.command:
+    cmd: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == true
+
+- name: Create rancher cattle-system namespace
+  ansible.builtin.command:
+    cmd: kubectl create namespace cattle-system
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+# Install cert manager
+- name: Add cert manager crds
+  anisble.builtin.command:
+    cmd: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.crds.yaml
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Add jetstack repo
+  ansible.builtin.command:
+    cmd: helm repo add jetstack https://charts.jetstack.io
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Update helm repo
+  ansible.builtin.command:
+    cmd: helm repo update
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Install cert manager
+  ansible.builtin.command:
+    cmd: helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.1 --set installCRDs=true
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+# Install rancher
+- name: Check if cert manager pod running
+  ansible.builtin.command:
+    cmd: kubectl get pods -n cert-manager
+  register: cert_manager_pod
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Wait for cert manager pod running
+  ansible.builtin.pause:
+    seconds: 30
+  when: inventory_hostname == groups['servers'][0] and cert_manager_pod.stdout.find("Running") == -1
+
+- name: Install rancher
+  ansible.builtin.command:
+    cmd: helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=rancher.tmdsite.my.id --set bootstrapPassword=admin
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Roll out status
+  ansible.builtin.command:
+    cmd: kubectl rollout status deploy/rancher --namespace cattle-system
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Get deploy rancher
+  ansible.builtin.command:
+    cmd: kubectl get deploy rancher -n cattle-system -o json
+  register: rancher_deploy
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Print rancher deploy
+  ansible.builtin.debug:
+    msg: "{{ rancher_deploy.stdout | from_json }}"
+  when: inventory_hostname == groups['servers'][0]
+
+# Expose Rancher
+
+# - name: Get rancher ingress
+#   ansible.builtin.command:
+#     cmd: kubectl get ingress rancher -n cattle-system -o json
+#   register: rancher_ingress
+#   changed_when: false
+#   when: inventory_hostname == groups['servers'][0]
+
+# - name: Get rancher ingress ip
+#   ansible.builtin.set_fact:
+#     rancher_ip: "{{ rancher_ingress.stdout | from_json | json_query('status.loadBalancer.ingress[0].ip') }}"
+#   when: inventory_hostname == groups['servers'][0]
+
+# - name: Print rancher ip
+#   ansible.builtin.debug:
+#     msg: "Rancher IP: {{ rancher_ip }}"
+#   when: inventory_hostname == groups['servers'][0]
+
+- name: Expose rancher via Loadbalancer
+  ansible.builtin.command:
+    cmd: kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Get rancher loadbalancer ip
+  ansible.builtin.command:
+    cmd: kubectl get svc rancher-lb -n cattle-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+  register: rancher_lb_ip
+  changed_when: false
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Print rancher loadbalancer ip
+  ansible.builtin.debug:
+    msg: "Rancher IP: {{ rancher_lb_ip.stdout }}"
+  when: inventory_hostname == groups['servers'][0]
