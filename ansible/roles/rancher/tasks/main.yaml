@@ -19,6 +19,8 @@
   ansible.builtin.stat:
     path: /usr/local/bin/helm
   register: helm_exist
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
 
 # Add rancher helm repository
 - name: Add rancher repo
@@ -28,12 +30,22 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == true
 
-- name: Create rancher cattle-system namespace
+- name: Check if cattle-system namespace exists
+  ansible.builtin.command:
+    cmd: kubectl get namespace cattle-system --ignore-not-found
+  register: namespace_check
+  become: true
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Create cattle-system namespace if it doesn't exist
   ansible.builtin.command:
     cmd: kubectl create namespace cattle-system
+  become: true
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and namespace_check.stdout == ""
 
 # Install cert manager
 - name: Add cert manager crds
@@ -65,18 +77,24 @@
   when: inventory_hostname == groups['servers'][0]
 
 # Install rancher
-- name: Check if cert manager pod running
+- name: Get all cert-manager pods in the namespace
   ansible.builtin.command:
-    cmd: kubectl get pods -n cert-manager
-  register: cert_manager_pod
+    cmd: kubectl get pods -n cert-manager --no-headers -o custom-columns=":metadata.name,:status.phase"
+  register: cert_manager_pods
   become_user: "{{ ansible_user }}"
   changed_when: false
   when: inventory_hostname == groups['servers'][0]
 
-- name: Wait for cert manager pod running
-  ansible.builtin.pause:
-    seconds: 30
-  when: inventory_hostname == groups['servers'][0] and cert_manager_pod.stdout.find("Running") == -1
+- name: Wait until all cert-manager pods are running
+  ansible.builtin.command:
+    cmd: kubectl get pods -n cert-manager --no-headers -o custom-columns=":metadata.name,:status.phase"
+  register: cert_manager_pods
+  become_user: "{{ ansible_user }}"
+  until: cert_manager_pods.stdout_lines | select("search", "Running") | length == cert_manager_pods.stdout_lines | length
+  retries: 20
+  delay: 15
+  changed_when: false
+  when: inventory_hostname == groups['servers'][0]
 
 - name: Install rancher
   ansible.builtin.command:
@@ -90,19 +108,6 @@
     cmd: kubectl rollout status deploy/rancher --namespace cattle-system
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Get deploy rancher
-  ansible.builtin.command:
-    cmd: kubectl get deploy rancher -n cattle-system -o json
-  register: rancher_deploy
-  become_user: "{{ ansible_user }}"
-  changed_when: false
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Print rancher deploy
-  ansible.builtin.debug:
-    msg: "{{ rancher_deploy.stdout | from_json }}"
   when: inventory_hostname == groups['servers'][0]
 
 # Expose Rancher
@@ -135,6 +140,7 @@
   ansible.builtin.command:
     cmd: kubectl get svc rancher-lb -n cattle-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
   register: rancher_lb_ip
+  become_user: "{{ ansible_user }}"
   changed_when: false
   when: inventory_hostname == groups['servers'][0]
 
