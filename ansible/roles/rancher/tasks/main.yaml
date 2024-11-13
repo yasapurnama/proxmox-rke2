@@ -1,4 +1,11 @@
 # Install helm chart
+- name: Check helm exist
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_exist
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
 - name: Download helm chart
   ansible.builtin.get_url:
     url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
@@ -6,21 +13,14 @@
     mode: '0700'
     force: true
   become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == false
 
 - name: Install helm chart
   ansible.builtin.command:
     cmd: /tmp/get_helm.sh
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Check helm exist
-  ansible.builtin.stat:
-    path: /usr/local/bin/helm
-  register: helm_exist
-  become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == false
 
 # Install cert manager
 - name: Add cert manager crds
@@ -35,7 +35,7 @@
     cmd: helm repo add jetstack https://charts.jetstack.io
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == true
+  when: inventory_hostname == groups['servers'][0]
 
 - name: Update helm repo
   ansible.builtin.command:
@@ -62,6 +62,13 @@
 - name: Add rancher repo
   ansible.builtin.command:
     cmd: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Update helm repo
+  ansible.builtin.command:
+    cmd: helm repo update
   become_user: "{{ ansible_user }}"
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
