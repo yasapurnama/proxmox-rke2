@@ -23,33 +23,41 @@
   when: inventory_hostname == groups['servers'][0] and helm_exist.stat.exists == false
 
 # Install cert manager
+- name: Check cert manager exist
+  ansible.builtin.command:
+    cmd: kubectl get pods --namespace cert-manager
+  register: cert_manager_exist
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
 - name: Add cert manager crds
   ansible.builtin.command:
     cmd: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.crds.yaml
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and cert_manager_exist.stdout == "No resources found in cert-manager namespace."
 
 - name: Add jetstack repo
   ansible.builtin.command:
     cmd: helm repo add jetstack https://charts.jetstack.io
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and cert_manager_exist.stdout == "No resources found in cert-manager namespace."
 
 - name: Update helm repo
   ansible.builtin.command:
     cmd: helm repo update
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and cert_manager_exist.stdout == "No resources found in cert-manager namespace."
 
 - name: Install cert manager
   ansible.builtin.command:
     cmd: helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.1
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and cert_manager_exist.stdout == "No resources found in cert-manager namespace."
 
 - name: Roll out cert-manager status
   ansible.builtin.command:
@@ -59,26 +67,34 @@
   when: inventory_hostname == groups['servers'][0]
 
 # Install rancher
+- name: Check rancher exist
+  ansible.builtin.command:
+    cmd: kubectl get pods --namespace cattle-system
+  register: rancher_exist
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
 - name: Add rancher repo
   ansible.builtin.command:
     cmd: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and rancher_exist.stdout == "No resources found in cattle-system namespace."
 
 - name: Update helm repo
   ansible.builtin.command:
     cmd: helm repo update
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and rancher_exist.stdout == "No resources found in cattle-system namespace."
 
 - name: Install rancher
   ansible.builtin.command:
     cmd: helm install rancher rancher-latest/rancher --namespace cattle-system --create-namespace --set hostname=rancher.tmdsite.my.id --set bootstrapPassword=admin
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and rancher_exist.stdout == "No resources found in cattle-system namespace."
 
 - name: Roll out rancher status
   ansible.builtin.command:
