@@ -117,7 +117,7 @@
     cmd: kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and rancher_lb_exist.stdout == 'Error from server (NotFound): services "rancher-lb" not found'
+  when: inventory_hostname == groups['servers'][0] and rancher_lb_exist.stdout == "Error from server (NotFound)\: services \"rancher-lb\" not found"
 
 - name: Get rancher loadbalancer ip
   ansible.builtin.command:
