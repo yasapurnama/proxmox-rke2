@@ -61,3 +61,10 @@
   gather_facts: true
   roles:
     - rancher
+
+# Install longhorn
+- name: Install longhorn
+  hosts: servers
+  gather_facts: true
+  roles:
+    - longhorn
