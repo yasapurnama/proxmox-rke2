@@ -14,30 +14,30 @@
     reload: true
   tags: sysctl
 
-# - name: Purge snapd and autoremove unused packages
-#   apt:
-#     name: snapd
-#     state: absent
-#     purge: yes
-#     autoremove: yes
-#   retries: 5
-#   delay: 10
-#   register: apt_remove_result
-#   until: apt_remove_result is succeeded
+- name: Purge snapd and autoremove unused packages
+  apt:
+    name: snapd
+    state: absent
+    purge: yes
+    autoremove: yes
+  retries: 5
+  delay: 10
+  register: apt_remove_result
+  until: apt_remove_result is succeeded
 
-# - name: Hold snapd package to prevent reinstallation
-#   command: apt-mark hold snapd
-#   register: apt_hold_result
-#   changed_when: "'snapd set on hold.' in apt_hold_result.stdout"
+- name: Hold snapd package to prevent reinstallation
+  command: apt-mark hold snapd
+  register: apt_hold_result
+  changed_when: "'snapd set on hold.' in apt_hold_result.stdout"
 
-# - name: Stop multipathd service
-#   systemd:
-#     name: multipathd.service
-#     state: stopped
-#     enabled: false
+- name: Stop multipathd service
+  systemd:
+    name: multipathd.service
+    state: stopped
+    enabled: false
 
-# - name: Stop multipathd socket
-#   systemd:
-#     name: multipathd.socket
-#     state: stopped
-#     enabled: false
+- name: Stop multipathd socket
+  systemd:
+    name: multipathd.socket
+    state: stopped
+    enabled: false
