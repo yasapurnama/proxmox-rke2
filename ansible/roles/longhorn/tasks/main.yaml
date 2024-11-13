@@ -1,21 +1,36 @@
 # Install longhorn
+- name: Check longhorn exist
+  ansible.builtin.command:
+    cmd: kubectl get pods --namespace longhorn-system
+  register: longhorn_exist
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0]
+
 - name: Add longhorn repo
   ansible.builtin.command:
     cmd: helm repo add longhorn https://charts.longhorn.io
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
 
 - name: Update helm repo
   ansible.builtin.command:
     cmd: helm repo update
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0]
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
 
 - name: Install longhorn
   ansible.builtin.command:
     cmd: helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace
+  become_user: "{{ ansible_user }}"
+  changed_when: true
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
+
+- name: Roll out longhorn status
+  ansible.builtin.command:
+    cmd: kubectl rollout status deploy/longhorn --namespace longhorn-system
   become_user: "{{ ansible_user }}"
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
