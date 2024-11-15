@@ -31,6 +31,10 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
+- name: Print cert manager exist stdout
+  ansible.builtin.debug:
+    msg: {{ cert_manager_exist.stdout }}
+
 - name: Add cert manager crds
   ansible.builtin.command:
     cmd: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.crds.yaml
@@ -75,6 +79,10 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
+- name: Print rancher exist stdout
+  ansible.builtin.debug:
+    msg: {{ rancher_exist.stdout }}
+
 - name: Add rancher repo
   ansible.builtin.command:
     cmd: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
@@ -112,12 +120,17 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
+- name: Print rancher loadbalancer exist stdout
+  ansible.builtin.debug:
+    msg: {{ rancher_lb_exist.stdout }}
+
 - name: Expose rancher via Loadbalancer
   ansible.builtin.command:
     cmd: kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and rancher_lb_exist.stdout == "Error from server (NotFound)\: services \"rancher-lb\" not found"
+  when: >
+    inventory_hostname == groups['servers'][0] and rancher_lb_exist.stdout == 'Error from server (NotFound): services "rancher-lb" not found'
 
 - name: Get rancher loadbalancer ip
   ansible.builtin.command:
