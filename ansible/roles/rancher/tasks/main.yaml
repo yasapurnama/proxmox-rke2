@@ -31,10 +31,6 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
-- name: Print cert manager exist stderr
-  ansible.builtin.debug:
-    msg: "{{ cert_manager_exist.stderr }}"
-
 - name: Add cert manager crds
   ansible.builtin.command:
     cmd: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.crds.yaml
@@ -79,10 +75,6 @@
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
-- name: Print rancher exist stderr
-  ansible.builtin.debug:
-    msg: "{{ rancher_exist.stderr }}"
-
 - name: Add rancher repo
   ansible.builtin.command:
     cmd: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
@@ -113,24 +105,23 @@
 
 # Expose Rancher
 - name: Check rancher loadbalancer exist
-  ansible.builtin.command:
-    cmd: kubectl get svc rancher-lb -n cattle-system
+  ansible.builtin.shell:
+    cmd: kubectl get svc -n cattle-system | grep rancher-lb
   register: rancher_lb_exist
   become_user: "{{ ansible_user }}"
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
 
-- name: Print rancher loadbalancer exist stderr
+- name: Print rancher loadbalancer exist stdout
   ansible.builtin.debug:
-    msg: "{{ rancher_lb_exist.stderr }}"
+    msg: "{{ rancher_lb_exist.stdout }}"
 
 - name: Expose rancher via Loadbalancer
   ansible.builtin.command:
     cmd: kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: >
-    inventory_hostname == groups['servers'][0] and rancher_lb_exist.stderr == "Error from server (NotFound): services \"rancher-lb\" not found"
+  when: inventory_hostname == groups['servers'][0] and rancher_lb_exist.stdout == ""
 
 - name: Get rancher loadbalancer ip
   ansible.builtin.command:
