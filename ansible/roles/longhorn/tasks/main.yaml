@@ -12,21 +12,21 @@
     cmd: helm repo add longhorn https://charts.longhorn.io
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stderr == "No resources found in longhorn-system namespace."
 
 - name: Update helm repo
   ansible.builtin.command:
     cmd: helm repo update
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stderr == "No resources found in longhorn-system namespace."
 
 - name: Install longhorn
   ansible.builtin.command:
     cmd: helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace
   become_user: "{{ ansible_user }}"
   changed_when: true
-  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stdout == "No resources found in longhorn-system namespace."
+  when: inventory_hostname == groups['servers'][0] and longhorn_exist.stderr == "No resources found in longhorn-system namespace."
 
 - name: Roll out longhorn status
   ansible.builtin.command:

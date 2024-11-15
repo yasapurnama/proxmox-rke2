@@ -110,11 +110,8 @@
   register: rancher_lb_exist
   become_user: "{{ ansible_user }}"
   changed_when: true
+  failed_when: false
   when: inventory_hostname == groups['servers'][0]
-
-- name: Print rancher loadbalancer exist stdout
-  ansible.builtin.debug:
-    msg: "{{ rancher_lb_exist.stdout }}"
 
 - name: Expose rancher via Loadbalancer
   ansible.builtin.command:
