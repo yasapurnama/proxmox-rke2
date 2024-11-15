@@ -30,7 +30,7 @@
 
 - name: Roll out longhorn status
   ansible.builtin.command:
-    cmd: kubectl rollout status deploy/longhorn --namespace longhorn-system
+    cmd: kubectl rollout status deploy/longhorn-ui --namespace longhorn-system
   become_user: "{{ ansible_user }}"
   changed_when: true
   when: inventory_hostname == groups['servers'][0]
