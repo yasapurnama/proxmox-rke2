@@ -192,6 +192,12 @@ variable "network_firewall" {
   default     = false
 }
 
+variable "disk_format" {
+  description = "The format of disk for the VMs"
+  type        = string
+  default     = "qcow2"
+}
+
 variable "disk_size" {
   description = "The size of the disk in GB for the VMs"
   type        = number
